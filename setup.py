@@ -30,6 +30,7 @@ setup(name='pklaus',
       entry_points = {
           'console_scripts': [
               'pklaus.images.renaming.to_exif_datetime = pklaus.images.renaming.to_exif_datetime:cli',
+              'pklaus.images.exif.extract = pklaus.images.exif.extract:cli',
           ],
       },
       include_package_data = False,
