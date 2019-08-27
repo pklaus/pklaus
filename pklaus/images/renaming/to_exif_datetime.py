@@ -53,7 +53,7 @@ def example_callback(fullname, dt):
     from datetime import timedelta
     from pklaus.images.exif.extract import extract_exif_pillow
 
-    dt = dt + timedelta(milliseconds=(int(data['SubsecTimeOriginal'])*10))
+    #dt = dt + timedelta(milliseconds=(int(data['SubsecTimeOriginal'])*10))
 
     data = extract_exif_pillow(fullname)
 
