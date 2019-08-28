@@ -25,13 +25,16 @@ setup(name='pklaus',
       packages = [
           'pklaus.images.exif',
           'pklaus.images.renaming',
+          'pklaus.images.orphans',
           'pklaus.files.name',
+          'pklaus.files.removal',
           ],
       entry_points = {
           'console_scripts': [
               'pklaus.images.renaming.to_exif_datetime = pklaus.images.renaming.to_exif_datetime:cli',
               'pklaus.images.exif.extract = pklaus.images.exif.extract:cli',
-              'pklaus.images.exif.fix_datetime= pklaus.images.exif.fix_datetime:main',
+              'pklaus.images.exif.fix_datetime = pklaus.images.exif.fix_datetime:main',
+              'pklaus.images.orphans.remove = pklaus.images.orphans.remove:main',
           ],
       },
       include_package_data = False,
