@@ -35,19 +35,9 @@ def main():
     if args.raw:
         RAW_EXTENSIONS = args.raw.split(',')
 
-    patterns = []
-    for ext in RAW_EXTENSIONS:
-        match = r''
-        for letter in ext:
-            if letter == '.':
-                match += r'\.'
-            elif letter in (str(num) for num in range(10)):
-                match += letter
-            else:
-                match += r'[' + letter.lower() + letter.upper() + r']'
-        patterns.append(match)
-    pattern = r'(.*)(' + r'|'.join(patterns) + r')$'
-    if verbose: print('Regular expression match pattern for RAW images:', pattern)
+    ext_patterns = (ext.lower().replace('.', r'\.') for ext in RAW_EXTENSIONS)
+    full_pattern = r'(.*)(' + r'|'.join(ext_patterns) + r')$'
+    if verbose: print('Regular expression match pattern for RAW images:', full_pattern)
 
 
     raw_images, jpeg_images_bare_names = [], []
@@ -55,7 +45,7 @@ def main():
     # sort files into raw and jpeg files
     for filename in all_files:
         # The file name of raw image ends with
-        if re.match(pattern, filename):
+        if re.match(full_pattern, filename.lower()):
             raw_images.append(filename)
         if re.match(r'(.*)\.[jJ][pP][eE]?[gG]$', filename):
             jpeg_images_bare_names.append(os.path.splitext(filename)[0])
