@@ -1,9 +1,11 @@
-import sys, logging
+import logging
 
 logger = logging.getLogger(__name__)
 
 def main():
-    import argparse
+    import argparse, sys
+    import plotille
+    import reprint
     from pklaus.network.ping.ping_wrapper import PingWrapper
     parser = argparse.ArgumentParser(description='Ping a host and create histogram.')
     parser.add_argument('host', help='The host to ping')
@@ -16,9 +18,13 @@ def main():
 
     ping_wrapper = PingWrapper(f'ping {args.host} -c{args.count} -i{args.interval}')
     try:
-        for round_trip_time in ping_wrapper.run():
-            print(round_trip_time)
-            sys.stdout.flush()
+        round_trip_times = []
+        with reprint.output(initial_len=60, interval=0) as output_lines:
+            for round_trip_time in ping_wrapper.run():
+                round_trip_times.append(round_trip_time)
+                if len(round_trip_times) < 2: continue
+                for i, line in enumerate(plotille.histogram(round_trip_times).split('\n')):
+                    output_lines[i] = line
     except KeyboardInterrupt:
         sys.exit()
 
