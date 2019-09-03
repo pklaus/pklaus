@@ -19,7 +19,7 @@ def main():
     ping_wrapper = PingWrapper(f'ping {args.host} -c{args.count} -i{args.interval}')
     try:
         round_trip_times = []
-        with reprint.output(initial_len=60, interval=0) as output_lines:
+        with reprint.output(initial_len=24, interval=0) as output_lines:
             for round_trip_time in ping_wrapper.run():
                 round_trip_times.append(round_trip_time)
                 if len(round_trip_times) < 2: continue
