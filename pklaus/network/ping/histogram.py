@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def main():
-    import argparse, sys
+    import argparse, sys, math
     import plotille
     import reprint
     from pklaus.network.ping.ping_wrapper import PingWrapper
@@ -23,8 +23,11 @@ def main():
             for round_trip_time in ping_wrapper.run():
                 round_trip_times.append(round_trip_time)
                 if len(round_trip_times) < 2: continue
-                for i, line in enumerate(plotille.histogram(round_trip_times).split('\n')):
-                    output_lines[i] = line
+                x_min = math.floor(min(round_trip_times))
+                x_max = math.ceil(max(round_trip_times))
+                hist_string = plotille.histogram(round_trip_times, width=60,
+                                                 height=20, x_min=x_min, x_max=x_max)
+                output_lines.change(hist_string.split('\n'))
     except KeyboardInterrupt:
         sys.exit()
 
