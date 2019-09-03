@@ -9,7 +9,7 @@ def main():
     from pklaus.network.ping.ping_wrapper import PingWrapper
     parser = argparse.ArgumentParser(description='Ping a host and create histogram.')
     parser.add_argument('host', help='The host to ping')
-    parser.add_argument('--count', '-c', type=int, default=4, help='Number of times the host should be pinged')
+    parser.add_argument('--count', '-c', type=int, default=60, help='Number of times the host should be pinged')
     parser.add_argument('--interval', '-i', type=float, default=1.0, help='Interval between individual pings.')
     parser.add_argument('--debug', '-d', action='store_true', help='Enable debug output for this script')
     args = parser.parse_args()
