@@ -34,6 +34,7 @@ setup(name='pklaus',
           'pklaus.epapers.focus',
           'pklaus.network.ping',
           'pklaus.processes.limit',
+          'pklaus.random.identifier',
           ],
       entry_points = {
           'console_scripts': [
