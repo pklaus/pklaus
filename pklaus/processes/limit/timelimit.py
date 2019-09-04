@@ -68,6 +68,7 @@ class Timelimit():
 
 def main():
     import argparse, subprocess
+    from pklaus.python.context_manager.delayedinterrupt import DelayedInterrupt
     def signal_type(sig_str):
         def int_strategy(sig_str):
             return signal.Signals(int(sig_str))
@@ -94,7 +95,10 @@ def main():
         raise NotImplementedError('--propagate flag')
     if args.quiet:
         logging.basicConfig(level=logging.ERROR)
-    tl = Timelimit(subprocess.run, args=(args.cmd,), kwargs=dict(shell=True, check=False))
+    def run_in_new_process():
+        with DelayedInterrupt(signal.SIGINT):
+            subprocess.run(args.cmd, shell=True, check=False)
+    tl = Timelimit(run_in_new_process)
     tl.killsig = args.killsig
     tl.warnsig = args.warnsig
     tl.killtime = args.killtime
