@@ -26,13 +26,25 @@ def generate_mac(uaa=False, multicast=False, oui=None, separator=':', byte_fmt='
             mac[0] |= 1 << 1 # set bit 1
     return separator.join(byte_fmt % b for b in mac)
 
+def generate_macs(number, **kwargs):
+    macs = set()
+    while len(macs) < number:
+        mac = generate_mac(**kwargs)
+        if mac in macs:
+            continue
+        macs.add(generate_mac(**kwargs))
+        yield mac
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('--number', type=int, default=1, help='Number of MACs to generate.')
     parser.add_argument('--uaa', action='store_true', help='generates a universally administered address (instead of LAA otherwise)')
     parser.add_argument('--multicast', action='store_true', help='generates a multicast MAC (instead of unicast otherwise)')
     parser.add_argument('--oui', help='enforces a specific organizationally unique identifier (like 00:60:2f for Cisco)')
     parser.add_argument('--byte-fmt', default='%02x', help='The byte format. Set to %02X for uppercase hex formatting.')
     parser.add_argument('--separator', default=':', help="The byte separator character. Defaults to ':'.")
     args = parser.parse_args()
-    print(generate_mac(oui=args.oui, uaa=args.uaa, multicast=args.multicast, separator=args.separator, byte_fmt=args.byte_fmt))
+    kwargs = dict(oui=args.oui, uaa=args.uaa, multicast=args.multicast, separator=args.separator, byte_fmt=args.byte_fmt)
+    for mac in generate_macs(args.number, **kwargs):
+        print(mac)
