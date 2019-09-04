@@ -35,6 +35,7 @@ setup(name='pklaus',
           'pklaus.network.ping',
           'pklaus.processes.limit',
           'pklaus.random.identifier',
+          'pklaus.python.context_manager',
           ],
       entry_points = {
           'console_scripts': [
