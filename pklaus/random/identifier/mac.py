@@ -27,6 +27,16 @@ def generate_mac(uaa=False, multicast=False, oui=None, separator=':', byte_fmt='
     return separator.join(byte_fmt % b for b in mac)
 
 def generate_macs(number, **kwargs):
+    entropy_bits = 6*8-2
+    oui, separator = kwargs.get('oui', None), kwargs.get('separator', ':')
+    if oui:
+        entropy_bits = (6 - len(oui.split(separator)))*8
+    if number > 2**entropy_bits:
+        raise ValueError(f"Impossible to sample more than {2**entropy_bits} addresses")
+    elif number > 0.5 * 2**entropy_bits:
+        import sys
+        print(f"Warning: Asked to sample {number} MACs out of an address space of {2**entropy_bits}. "
+              f"The implementation is not suited for this ratio and will be slow.", file=sys.stderr)
     macs = set()
     while len(macs) < number:
         mac = generate_mac(**kwargs)
