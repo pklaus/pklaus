@@ -1,13 +1,18 @@
 import subprocess, select, threading, time
 
 class TailF():
+
     polling_timeout = 0.0005
     inter_polling_sleep = 0.005
     initial_tail_done_threshold = 10
-    def __init__(self, filename, n=600, encoding=None):
+
+    def __init__(self, filename, n=600, encoding=None, tail_options=['-f']):
         self.filename = filename
         self.n = n
-        self._f = subprocess.Popen(['tail', '-n', str(n), '-F', filename],
+        # tail_options: default: ['-f']
+        # some alternatives (on Linux): ['-f', '-z'] or ['-F'] or ['--follow=name', '--retry']
+        self.tail_options = tail_options
+        self._f = subprocess.Popen(['tail', '-n', str(n)] + self.tail_options + [filename],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         self._p = select.poll()
@@ -37,6 +42,10 @@ class TailF():
 
     def start(self):
         # start / resume watching for new incoming lines
+        time.sleep(0.02)
+        if select.select([self._f.stderr.raw], [], [], self.polling_timeout)[0]:
+            stderr = self._f.stderr.raw.read(512)
+            raise NameError("Failed to run tail: " + stderr.decode('utf-8'))
         self._running = True
         def worker():
             while self._running:
@@ -72,7 +81,8 @@ def main():
     parser.add_argument('file', help="File to watch for new lines at the end (= 'tail -f' in Python)")
     args = parser.parse_args()
 
-    ft = TailF(args.file)
+    #ft = TailF(args.file, tail_options=['-F', '-z'])
+    ft = TailF(args.file, tail_options=['-F'])
     ft.encoding = 'utf-8'
 
     lines = []
