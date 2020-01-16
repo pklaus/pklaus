@@ -37,6 +37,7 @@ setup(name='pklaus',
           'pklaus.processes.limit',
           'pklaus.random.identifier',
           'pklaus.python.context_manager',
+          'pklaus.python.decorators',
           ],
       entry_points = {
           'console_scripts': [
