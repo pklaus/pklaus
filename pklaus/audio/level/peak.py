@@ -18,7 +18,7 @@ def main():
 
     maxValue = 2**16
     p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,channels=2,rate=44100,
+    stream = p.open(format=pyaudio.paInt16, channels=2, rate=44100,
                     input=True, frames_per_buffer=1024)
 
     try:
@@ -32,9 +32,9 @@ def main():
                 bars = args.bars
                 lString = "#"*int(peakL*bars)+"-"*int(bars-peakL*bars)
                 rString = "#"*int(peakR*bars)+"-"*int(bars-peakR*bars)
-                print("L=[%s]\tR=[%s]"%(lString, rString))
+                print(f"L=[{lString}]\tR=[{rString}]")
             else:
-                print("L:%00.02f R:%00.02f"%(peakL*100, peakR*100))
+                print(f"L:{peakL*100:6.2f}%  R:{peakR*100:6.2f}%")
     except KeyboardInterrupt:
         print()
 

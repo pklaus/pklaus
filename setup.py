@@ -43,6 +43,7 @@ setup(name='pklaus',
       entry_points = {
           'console_scripts': [
               'pklaus.audio.level.peak = pklaus.audio.level.peak:main',
+              'pklaus.audio.level.lufs = pklaus.audio.level.lufs:main',
               'pklaus.images.renaming.to_exif_datetime = pklaus.images.renaming.to_exif_datetime:cli',
               'pklaus.images.exif.extract = pklaus.images.exif.extract:cli',
               'pklaus.images.exif.fix_datetime = pklaus.images.exif.fix_datetime:main',
