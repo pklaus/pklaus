@@ -23,6 +23,7 @@ setup(name='pklaus',
       url = 'https://github.com/pklaus/pklaus',
       license = 'GPL',
       packages = [
+          'pklaus.audio.level',
           'pklaus.images.exif',
           'pklaus.images.renaming',
           'pklaus.images.orphans',
@@ -41,6 +42,7 @@ setup(name='pklaus',
           ],
       entry_points = {
           'console_scripts': [
+              'pklaus.audio.level.peak = pklaus.audio.level.peak:main',
               'pklaus.images.renaming.to_exif_datetime = pklaus.images.renaming.to_exif_datetime:cli',
               'pklaus.images.exif.extract = pklaus.images.exif.extract:cli',
               'pklaus.images.exif.fix_datetime = pklaus.images.exif.fix_datetime:main',
