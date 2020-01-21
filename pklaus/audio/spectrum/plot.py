@@ -18,8 +18,8 @@ import threading
 import atexit
 import math
 
-#sample_style = (pyaudio.paFloat32, np.float32, 1.0, -18, 18)
-sample_style = (pyaudio.paInt16, np.int16, 32768, -60, 6)
+sample_style = (pyaudio.paFloat32, np.float32, 1.0, -24, 24)
+#sample_style = (pyaudio.paInt16, np.int16, 32768, -24, 24)
 
 class DecibelSlider(QtWidgets.QSlider):
 
@@ -62,7 +62,8 @@ class DecibelSlider(QtWidgets.QSlider):
         self.set_decibel(db)
 
     def set_decibel(self, db):
-        self.setValue(self.db_to_int(db))
+        value = min(self.INT_MAX, max(self.INT_MIN, self.db_to_int(db)))
+        self.setValue(value)
 
     def decibel(self):
         return self.int_to_db(self.value())
@@ -193,27 +194,50 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
     def initUI(self):
 
-        hbox_gain = QtWidgets.QHBoxLayout()
+        hbox_autogain = QtWidgets.QHBoxLayout()
         autoGain = QtWidgets.QLabel('Auto gain for frequency spectrum')
         autoGainCheckBox = QtWidgets.QCheckBox(checked=True)
-        hbox_gain.addWidget(autoGain)
-        hbox_gain.addWidget(autoGainCheckBox)
+        hbox_autogain.addWidget(autoGain)
+        hbox_autogain.addWidget(autoGainCheckBox)
 
         # reference to checkbox
         self.autoGainCheckBox = autoGainCheckBox
 
         hbox_fixedGain = QtWidgets.QHBoxLayout()
-        fixedGain = QtWidgets.QLabel('Manual gain level for frequency spectrum')
+        fixedGain = QtWidgets.QLabel('Manual gain level for frequency spectrum:')
+        fixedGainVal = QtWidgets.QLabel()
         fixedGainSlider = DecibelSlider(low_db=sample_style[3], high_db=sample_style[4])
+        def fixedGainSliderChanged():
+            fixedGainVal.setText(f"{fixedGainSlider.decibel():6.1f} dB")
+        fixedGainSlider.valueChanged.connect(fixedGainSliderChanged)
+        fixedGainSliderChanged()
         hbox_fixedGain.addWidget(fixedGain)
+        hbox_fixedGain.addWidget(fixedGainVal)
         hbox_fixedGain.addWidget(fixedGainSlider)
 
         self.fixedGainSlider = fixedGainSlider
 
+        hbox_cutoff = QtWidgets.QHBoxLayout()
+        cutoff = QtWidgets.QLabel('Cutoff lowest frequencies (improves autoscaling for high frequencies):')
+        cutoffVal = QtWidgets.QLabel()
+        cutoffSlider = QtWidgets.QSlider(Qt.Horizontal)
+        cutoffSlider.setMaximum(self.chunksize//2)
+        cutoffSlider.setValue(1)
+        def cutoffSliderChanged():
+            cutoffVal.setText(f"{cutoffSlider.value()} Hz")
+        cutoffSlider.valueChanged.connect(cutoffSliderChanged)
+        cutoffSliderChanged()
+        hbox_cutoff.addWidget(cutoff)
+        hbox_cutoff.addWidget(cutoffVal)
+        hbox_cutoff.addWidget(cutoffSlider)
+
+        self.cutoffSlider = cutoffSlider
+
         vbox = QtWidgets.QVBoxLayout()
 
-        vbox.addLayout(hbox_gain)
+        vbox.addLayout(hbox_autogain)
         vbox.addLayout(hbox_fixedGain)
+        vbox.addLayout(hbox_cutoff)
 
         # mpl figure
         self.main_figure = MplFigure(self)
@@ -222,7 +246,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
-        self.setGeometry(10, 10, 650, 600)
+        self.setGeometry(10, 10, 900, 900)
         self.setWindowTitle('LiveFFT')
         self.show()
         # timer for callbacks, taken from:
@@ -260,7 +284,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
         # bottom plot
         self.ax_bottom = self.main_figure.figure.add_subplot(212)
-        self.ax_bottom.set_ylim(0, 1)
+        self.ax_bottom.set_ylim(0, sample_style[2])
         self.ax_bottom.set_xlim(0, self.freq_vect.max())
         self.ax_bottom.set_xlabel(u'frequency (Hz)', fontsize=6)
         # line objects
@@ -284,8 +308,9 @@ class LiveFFTWidget(QtWidgets.QWidget):
             self.line_top.set_data(self.time_vect, current_frame)
             # computes and plots the fft signal
             fft_frame = np.fft.rfft(current_frame)
+            fft_frame[0:self.cutoffSlider.value()] = 0.0
             if self.autoGainCheckBox.checkState() == QtCore.Qt.Checked:
-                gain = 1/np.abs(fft_frame).max()
+                gain = 1/np.abs(fft_frame).max()*sample_style[2]
                 self.fixedGainSlider.set_power_ratio(gain)
             else:
                 gain = self.fixedGainSlider.power_ratio()
