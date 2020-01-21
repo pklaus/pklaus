@@ -1,3 +1,8 @@
+"""
+https://flothesof.github.io/pyqt-microphone-fft-application.html
+https://github.com/flothesof/LiveFFTPitchTracker/blob/master/LiveFFT.py
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from PyQt5 import QtGui, QtCore, QtWidgets
