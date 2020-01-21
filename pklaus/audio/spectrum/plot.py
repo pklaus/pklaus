@@ -18,6 +18,9 @@ import threading
 import atexit
 import math
 
+#sample_style = (pyaudio.paFloat32, np.float32, 1.0, -18, 18)
+sample_style = (pyaudio.paInt16, np.int16, 32768, -60, 6)
+
 class DecibelSlider(QtWidgets.QSlider):
 
     """
@@ -34,6 +37,7 @@ class DecibelSlider(QtWidgets.QSlider):
         self.setMaximum(self.INT_MAX)
         self.low_db = low_db
         self.high_db = high_db
+        self.lowest_as_inf = False
 
     @classmethod
     def db_to_power_ratio(cls, db):
@@ -87,25 +91,35 @@ class DecibelSlider(QtWidgets.QSlider):
         qp.setFont(font)
         size = self.size()
         contents = self.contentsRect()
-        db_val_list = [40, 20, 10, 6, 3, 0, -3, -6, -10, -20, -40, -60]
+        #db_val_list = [40, 20, 10, 6, 3, 0, -3, -6, -10, -20, -40, -60]
+        db_val_list = list(range(self.low_db, math.ceil(self.high_db+0.001), 6))
         for val in db_val_list:
-            if val == max(db_val_list):
-                x_val_fudge = -10
-            elif val == min(db_val_list):
-                x_val_fudge = +10
-            db_scaled = self.db_to_int(val)
-            x_val = db_scaled / self.INT_MAX * contents.width()
-            if val == min(db_val_list):
-                qp.drawText(x_val + font_x_offset + x_val_fudge,
+            range_padding = 10 # padding of contents.width() on left and right side
+            db_as_int = self.db_to_int(val)
+            x_val = db_as_int \
+                    * (contents.width() - 2*range_padding) \
+                    / (self.INT_MAX - self.INT_MIN) \
+                    + range_padding
+            if val == min(db_val_list) and self.lowest_as_inf:
+                qp.drawText(x_val + font_x_offset,
                             contents.y() + font.pointSize(),
                             '-oo')
+            elif val == max(db_val_list):
+                # right align last value
+                qp.drawText(x_val - font_x_offset - 100,
+                            contents.y() + font.pointSize() - QtGui.QFontMetricsF(font).ascent(),
+                            100,
+                            font.pointSize() * 5,
+                            Qt.AlignRight | Qt.AlignTop,
+                            #Qt.AlignRight,
+                            '{0:2}'.format(val))
             else:
-                qp.drawText(x_val + font_x_offset + x_val_fudge,
+                qp.drawText(x_val + font_x_offset,
                             contents.y() + font.pointSize(),
                             '{0:2}'.format(val))
-            qp.drawLine(x_val + x_val_fudge,
+            qp.drawLine(x_val,
                         contents.y() - font.pointSize(),
-                        x_val + x_val_fudge,
+                        x_val,
                         contents.y() + contents.height())
 
 class MicrophoneRecorder(object):
@@ -115,7 +129,7 @@ class MicrophoneRecorder(object):
         self.rate = rate
         self.chunksize = chunksize
         self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paInt16,
+        self.stream = self.p.open(format=sample_style[0],
                                   channels=1,
                                   rate=self.rate,
                                   input=True,
@@ -127,7 +141,7 @@ class MicrophoneRecorder(object):
         atexit.register(self.close)
 
     def new_frame(self, data, frame_count, time_info, status):
-        data = np.frombuffer(data, 'int16')
+        data = np.frombuffer(data, sample_style[1])
         with self.lock:
             self.frames.append(data)
             if self.stop:
@@ -156,6 +170,12 @@ class MplFigure(object):
         self.toolbar = NavigationToolbar(self.canvas, parent)
 
 class LiveFFTWidget(QtWidgets.QWidget):
+
+    chunksize = 1024*8
+    rate = 48000
+    #chunksize = 1024
+    #rate = 4000
+
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
 
@@ -184,7 +204,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
         hbox_fixedGain = QtWidgets.QHBoxLayout()
         fixedGain = QtWidgets.QLabel('Manual gain level for frequency spectrum')
-        fixedGainSlider = DecibelSlider()
+        fixedGainSlider = DecibelSlider(low_db=sample_style[3], high_db=sample_style[4])
         hbox_fixedGain.addWidget(fixedGain)
         hbox_fixedGain.addWidget(fixedGainSlider)
 
@@ -215,7 +235,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
 
     def initData(self):
-        mic = MicrophoneRecorder()
+        mic = MicrophoneRecorder(rate=self.rate, chunksize=self.chunksize)
         mic.start()
 
         # keeps reference to mic
@@ -224,7 +244,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
         # computes the parameters that will be used during plotting
         self.freq_vect = np.fft.rfftfreq(mic.chunksize,
                                          1./mic.rate)
-        self.time_vect = np.arange(mic.chunksize, dtype=np.float32) / mic.rate * 1000
+        self.time_vect = np.arange(mic.chunksize, dtype=sample_style[1]) / mic.rate * 1000
 
     def connectSlots(self):
         pass
@@ -234,7 +254,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
         references for further use"""
         # top plot
         self.ax_top = self.main_figure.figure.add_subplot(211)
-        self.ax_top.set_ylim(-32768, 32768)
+        self.ax_top.set_ylim(-sample_style[2], sample_style[2])
         self.ax_top.set_xlim(0, self.time_vect.max())
         self.ax_top.set_xlabel(u'time (ms)', fontsize=6)
 
