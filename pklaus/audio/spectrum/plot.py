@@ -64,10 +64,14 @@ class DecibelSlider(QtWidgets.QSlider):
         return self.int_to_db(self.value())
 
     def db_to_int(self, db):
-        return (db - self.low_db) * (self.INT_MAX - self.INT_MIN) / (self.high_db - self.low_db)
+        return (db - self.low_db) \
+             * (self.INT_MAX - self.INT_MIN) \
+             / (self.high_db - self.low_db)
 
     def int_to_db(self, val):
-        return (val - self.INT_MIN) * (self.high_db - self.low_db) / (self.INT_MAX - self.INT_MIN) + self.low_db
+        return (val - self.INT_MIN) \
+             * (self.high_db - self.low_db) \
+             / (self.INT_MAX - self.INT_MIN) + self.low_db
 
     def paintEvent(self, event):
         """Paint log scale ticks"""
@@ -90,13 +94,19 @@ class DecibelSlider(QtWidgets.QSlider):
             elif val == min(db_val_list):
                 x_val_fudge = +10
             db_scaled = self.db_to_int(val)
-            #y_val = contents.height() - translate(db_scaled, 0, 1023, 0, contents.height())
             x_val = db_scaled / self.INT_MAX * contents.width()
-            if val == -90:
-                qp.drawText(x_val + font_x_offset + x_val_fudge, contents.y() + font.pointSize(), '-oo')
+            if val == min(db_val_list):
+                qp.drawText(x_val + font_x_offset + x_val_fudge,
+                            contents.y() + font.pointSize(),
+                            '-oo')
             else:
-                qp.drawText(x_val + font_x_offset + x_val_fudge, contents.y() + font.pointSize(), '{0:2}'.format(val))
-            qp.drawLine(x_val + x_val_fudge, contents.y() - font.pointSize(), x_val + x_val_fudge,  contents.y() + contents.height())
+                qp.drawText(x_val + font_x_offset + x_val_fudge,
+                            contents.y() + font.pointSize(),
+                            '{0:2}'.format(val))
+            qp.drawLine(x_val + x_val_fudge,
+                        contents.y() - font.pointSize(),
+                        x_val + x_val_fudge,
+                        contents.y() + contents.height())
 
 class MicrophoneRecorder(object):
     # class taken from the SciPy 2015 Vispy talk opening example
