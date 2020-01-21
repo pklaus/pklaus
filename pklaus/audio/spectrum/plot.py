@@ -64,7 +64,7 @@ class DecibelSlider(QtWidgets.QSlider):
 
     def set_decibel(self, db):
         value = min(self.INT_MAX, max(self.INT_MIN, self.db_to_int(db)))
-        self.setValue(value)
+        self.setValue(round(value))
 
     def decibel(self):
         return self.int_to_db(self.value())
@@ -103,26 +103,26 @@ class DecibelSlider(QtWidgets.QSlider):
                     / (self.INT_MAX - self.INT_MIN) \
                     + range_padding
             if val == min(db_val_list) and self.lowest_as_inf:
-                qp.drawText(x_val + font_x_offset,
-                            contents.y() + font.pointSize(),
+                qp.drawText(round(x_val + font_x_offset),
+                            round(contents.y() + font.pointSize()),
                             '-oo')
             elif val == max(db_val_list):
                 # right align last value
-                qp.drawText(x_val - font_x_offset - 100,
-                            contents.y() + font.pointSize() - QtGui.QFontMetricsF(font).ascent(),
+                qp.drawText(round(x_val - font_x_offset - 100),
+                            round(contents.y() + font.pointSize() - QtGui.QFontMetricsF(font).ascent()),
                             100,
-                            font.pointSize() * 5,
-                            Qt.AlignRight | Qt.AlignTop,
+                            round(font.pointSize() * 5),
+                            int(Qt.AlignRight | Qt.AlignTop),
                             #Qt.AlignRight,
                             '{0:2}'.format(val))
             else:
-                qp.drawText(x_val + font_x_offset,
-                            contents.y() + font.pointSize(),
+                qp.drawText(round(x_val + font_x_offset),
+                            round(contents.y() + font.pointSize()),
                             '{0:2}'.format(val))
-            qp.drawLine(x_val,
-                        contents.y() - font.pointSize(),
-                        x_val,
-                        contents.y() + contents.height())
+            qp.drawLine(round(x_val),
+                        round(contents.y() - font.pointSize()),
+                        round(x_val),
+                        round(contents.y() + contents.height()))
 
 class MicrophoneRecorder(object):
     # class taken from the SciPy 2015 Vispy talk opening example
