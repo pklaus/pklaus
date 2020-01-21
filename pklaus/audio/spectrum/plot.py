@@ -4,17 +4,99 @@ https://github.com/flothesof/LiveFFTPitchTracker/blob/master/LiveFFT.py
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
+from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtCore import Qt
+
 import pyaudio
+
 import threading
 import atexit
-import numpy as np
+import math
+
+class DecibelSlider(QtWidgets.QSlider):
+
+    """
+    inspired by
+    https://www.qtcentre.org/threads/67835-Slider-with-log-ticks?p=298369#post298369
+    """
+
+    INT_MIN = 0
+    INT_MAX = 1000000
+
+    def __init__(self, low_db=-60, high_db=6):
+        super(DecibelSlider, self).__init__(Qt.Horizontal)
+        self.setMinimum(self.INT_MIN)
+        self.setMaximum(self.INT_MAX)
+        self.low_db = low_db
+        self.high_db = high_db
+
+    @classmethod
+    def db_to_power_ratio(cls, db):
+        return 10**(db/10)
+
+    @classmethod
+    def db_to_amplitude_ratio(cls, db):
+        return 10**(db/20)
+
+    def power_ratio(self):
+        return self.db_to_power_ratio(self.decibel())
+
+    def amplitude_ratio(self):
+        return self.db_to_amplitude_ratio(self.decibel())
+
+    def set_power_ratio(self, pr):
+        db = 10 * math.log10(pr)
+        self.set_decibel(db)
+
+    def set_amplitude_ratio(self, ar):
+        db = 20 * math.log10(ar)
+        self.set_decibel(db)
+
+    def set_decibel(self, db):
+        self.setValue(self.db_to_int(db))
+
+    def decibel(self):
+        return self.int_to_db(self.value())
+
+    def db_to_int(self, db):
+        return (db - self.low_db) * (self.INT_MAX - self.INT_MIN) / (self.high_db - self.low_db)
+
+    def int_to_db(self, val):
+        return (val - self.INT_MIN) * (self.high_db - self.low_db) / (self.INT_MAX - self.INT_MIN) + self.low_db
+
+    def paintEvent(self, event):
+        """Paint log scale ticks"""
+        super(DecibelSlider, self).paintEvent(event)
+        qp = QtGui.QPainter(self)
+        pen = QtGui.QPen()
+        pen.setWidth(2)
+        pen.setColor(Qt.black)
+
+        qp.setPen(pen)
+        font = QtGui.QFont('Times', 10)
+        font_x_offset = font.pointSize()/2
+        qp.setFont(font)
+        size = self.size()
+        contents = self.contentsRect()
+        db_val_list = [40, 20, 10, 6, 3, 0, -3, -6, -10, -20, -40, -60]
+        for val in db_val_list:
+            if val == max(db_val_list):
+                x_val_fudge = -10
+            elif val == min(db_val_list):
+                x_val_fudge = +10
+            db_scaled = self.db_to_int(val)
+            #y_val = contents.height() - translate(db_scaled, 0, 1023, 0, contents.height())
+            x_val = db_scaled / self.INT_MAX * contents.width()
+            if val == -90:
+                qp.drawText(x_val + font_x_offset + x_val_fudge, contents.y() + font.pointSize(), '-oo')
+            else:
+                qp.drawText(x_val + font_x_offset + x_val_fudge, contents.y() + font.pointSize(), '{0:2}'.format(val))
+            qp.drawLine(x_val + x_val_fudge, contents.y() - font.pointSize(), x_val + x_val_fudge,  contents.y() + contents.height())
 
 class MicrophoneRecorder(object):
     # class taken from the SciPy 2015 Vispy talk opening example
@@ -92,7 +174,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
         hbox_fixedGain = QtWidgets.QHBoxLayout()
         fixedGain = QtWidgets.QLabel('Manual gain level for frequency spectrum')
-        fixedGainSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        fixedGainSlider = DecibelSlider()
         hbox_fixedGain.addWidget(fixedGain)
         hbox_fixedGain.addWidget(fixedGainSlider)
 
@@ -110,7 +192,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
-        self.setGeometry(300, 300, 350, 300)
+        self.setGeometry(10, 10, 650, 600)
         self.setWindowTitle('LiveFFT')
         self.show()
         # timer for callbacks, taken from:
@@ -173,10 +255,11 @@ class LiveFFTWidget(QtWidgets.QWidget):
             # computes and plots the fft signal
             fft_frame = np.fft.rfft(current_frame)
             if self.autoGainCheckBox.checkState() == QtCore.Qt.Checked:
-                fft_frame /= np.abs(fft_frame).max()
+                gain = 1/np.abs(fft_frame).max()
+                self.fixedGainSlider.set_power_ratio(gain)
             else:
-                fft_frame *= (1 + self.fixedGainSlider.value()) / 5000000.
-                #print(np.abs(fft_frame).max())
+                gain = self.fixedGainSlider.power_ratio()
+            fft_frame *= gain
             self.line_bottom.set_data(self.freq_vect, np.abs(fft_frame))
 
             # refreshes the plots
