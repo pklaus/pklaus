@@ -224,7 +224,7 @@ class LiveFFTWidget(QtWidgets.QWidget):
         cutoffSlider.setMaximum(self.chunksize//2)
         cutoffSlider.setValue(1)
         def cutoffSliderChanged():
-            cutoffVal.setText(f"{cutoffSlider.value()} Hz")
+            cutoffVal.setText(f"{cutoffSlider.value()*self.rate/self.chunksize:.0f} Hz")
         cutoffSlider.valueChanged.connect(cutoffSliderChanged)
         cutoffSliderChanged()
         grid.addWidget(cutoff, 3, 0)
