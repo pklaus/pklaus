@@ -195,16 +195,16 @@ class LiveFFTWidget(QtWidgets.QWidget):
 
     def initUI(self):
 
-        hbox_autogain = QtWidgets.QHBoxLayout()
+        grid = QtWidgets.QGridLayout()
         autoGain = QtWidgets.QLabel('Auto gain for frequency spectrum')
         autoGainCheckBox = QtWidgets.QCheckBox(checked=True)
-        hbox_autogain.addWidget(autoGain)
-        hbox_autogain.addWidget(autoGainCheckBox)
+        grid.addWidget(autoGain, 1, 0)
+        grid.addWidget(QtWidgets.QLabel('                   '), 1, 1)
+        grid.addWidget(autoGainCheckBox, 1, 2)
 
         # reference to checkbox
         self.autoGainCheckBox = autoGainCheckBox
 
-        hbox_fixedGain = QtWidgets.QHBoxLayout()
         fixedGain = QtWidgets.QLabel('Manual gain level for frequency spectrum:')
         fixedGainVal = QtWidgets.QLabel()
         fixedGainSlider = DecibelSlider(low_db=sample_style[3], high_db=sample_style[4])
@@ -212,13 +212,12 @@ class LiveFFTWidget(QtWidgets.QWidget):
             fixedGainVal.setText(f"{fixedGainSlider.decibel():6.1f} dB")
         fixedGainSlider.valueChanged.connect(fixedGainSliderChanged)
         fixedGainSliderChanged()
-        hbox_fixedGain.addWidget(fixedGain)
-        hbox_fixedGain.addWidget(fixedGainVal)
-        hbox_fixedGain.addWidget(fixedGainSlider)
+        grid.addWidget(fixedGain, 2, 0)
+        grid.addWidget(fixedGainVal, 2, 1, alignment=Qt.AlignRight)
+        grid.addWidget(fixedGainSlider, 2, 2)
 
         self.fixedGainSlider = fixedGainSlider
 
-        hbox_cutoff = QtWidgets.QHBoxLayout()
         cutoff = QtWidgets.QLabel('Cutoff lowest frequencies (improves autoscaling for high frequencies):')
         cutoffVal = QtWidgets.QLabel()
         cutoffSlider = QtWidgets.QSlider(Qt.Horizontal)
@@ -228,17 +227,15 @@ class LiveFFTWidget(QtWidgets.QWidget):
             cutoffVal.setText(f"{cutoffSlider.value()} Hz")
         cutoffSlider.valueChanged.connect(cutoffSliderChanged)
         cutoffSliderChanged()
-        hbox_cutoff.addWidget(cutoff)
-        hbox_cutoff.addWidget(cutoffVal)
-        hbox_cutoff.addWidget(cutoffSlider)
+        grid.addWidget(cutoff, 3, 0)
+        grid.addWidget(cutoffVal, 3, 1, alignment=Qt.AlignRight)
+        grid.addWidget(cutoffSlider, 3, 2)
 
         self.cutoffSlider = cutoffSlider
 
         vbox = QtWidgets.QVBoxLayout()
 
-        vbox.addLayout(hbox_autogain)
-        vbox.addLayout(hbox_fixedGain)
-        vbox.addLayout(hbox_cutoff)
+        vbox.addLayout(grid)
 
         # mpl figure
         self.main_figure = MplFigure(self)
