@@ -11,14 +11,14 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
-# class taken from the SciPy 2015 Vispy talk opening example
-# see https://github.com/vispy/vispy/pull/928
 import pyaudio
 import threading
 import atexit
 import numpy as np
 
 class MicrophoneRecorder(object):
+    # class taken from the SciPy 2015 Vispy talk opening example
+    # see https://github.com/vispy/vispy/pull/928
     def __init__(self, rate=4000, chunksize=1024):
         self.rate = rate
         self.chunksize = chunksize
