@@ -16,8 +16,8 @@ stream=p.open(format=pyaudio.paInt16,channels=1,rate=RATE,input=True,
               frames_per_buffer=CHUNK) #uses default input device
 
 # create a numpy array holding a single read of audio data
-for i in range(10): #to it a few times just to see
-    data = np.fromstring(stream.read(CHUNK),dtype=np.int16)
+while True:
+    data = np.frombuffer(stream.read(CHUNK), dtype=np.int16)
     data = data * np.hanning(len(data)) # smooth the FFT by windowing data
     fft = abs(np.fft.fft(data).real)
     fft = fft[:int(len(fft)/2)] # keep only first half
