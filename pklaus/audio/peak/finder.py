@@ -26,12 +26,6 @@ while True:
     freqPeak = freq[np.where(fft==np.max(fft))[0][0]]+1
     print("peak frequency: %d Hz"%freqPeak)
 
-    # uncomment this if you want to see what the freq vs FFT looks like
-    #plt.plot(freq,fft)
-    #plt.axis([0,4000,None,None])
-    #plt.show()
-    #plt.close()
-
 # close the stream gracefully
 stream.stop_stream()
 stream.close()
