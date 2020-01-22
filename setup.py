@@ -24,6 +24,7 @@ setup(name='pklaus',
       license = 'GPL',
       packages = [
           'pklaus.audio.level',
+          'pklaus.audio.peak',
           'pklaus.audio.spectrogram',
           'pklaus.audio.spectrum',
           'pklaus.audio.waveform',
