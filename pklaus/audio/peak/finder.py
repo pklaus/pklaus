@@ -19,9 +19,9 @@ stream=p.open(format=pyaudio.paInt16,channels=1,rate=RATE,input=True,
 while True:
     data = np.frombuffer(stream.read(CHUNK), dtype=np.int16)
     data = data * np.hanning(len(data)) # smooth the FFT by windowing data
-    fft = abs(np.fft.fft(data).real)
+    fft = abs(np.fft.rfft(data))
     fft = fft[:int(len(fft)/2)] # keep only first half
-    freq = np.fft.fftfreq(CHUNK,1.0/RATE)
+    freq = np.fft.rfftfreq(CHUNK, 1.0/RATE)
     freq = freq[:int(len(freq)/2)] # keep only first half
     freqPeak = freq[np.where(fft==np.max(fft))[0][0]]+1
     print("peak frequency: %d Hz"%freqPeak)
