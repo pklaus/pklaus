@@ -59,7 +59,7 @@ class ExtendedParticle(Particle):
         """ Lorentz boost in positive z direction """
         boost_gamma = 1.0 / math.sqrt(1-boost_beta**2)
         t  = boost_gamma * (self.t  + boost_beta * self.rz)
-        rz = boost_gamma * (self.pz + boost_beta * self.t)
+        rz = boost_gamma * (self.rz + boost_beta * self.t)
         E  = boost_gamma * (self.E  + boost_beta * self.pz)
         pz = boost_gamma * (self.pz + boost_beta * self.E)
         self.t, self.rz, self.E, self.pz = t, rz, E, pz
