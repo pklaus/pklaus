@@ -64,7 +64,7 @@ class ExtendedParticle(Particle):
         pz = boost_gamma * (self.pz + boost_beta * self.E)
         self.t, self.rz, self.E, self.pz = t, rz, E, pz
 
-def main():
+def test():
     p = Particle(t=1, rx=1, ry=1, rz=1, E=10, px=1, py=1, pz=1)
     # upcast:
     p.__class__ = ExtendedParticle
@@ -74,6 +74,48 @@ def main():
     # downcast:
     p.__class__ = Particle
     assert p.pz == 77.26805134590856
+
+    p = Particle(0, 1, 1, 1, 10, 1, 1, 1)
+    p.__class__ = ExtendedParticle
+    #p.boost(0.9224028)
+
+    def assert_almost_equal(t1, t2, allowed_rel_dev=1e-13):
+        for i, (val1, val2) in enumerate(zip(t1, t2)):
+            if val1 == val2: continue
+            rel_dev = abs(val1 - val2) *2 / (val1 + val2)
+            if rel_dev > allowed_rel_dev:
+                raise AssertionError(f"tuple elements at index {i} are not identical within allowance: {val1} !~ {val2}")
+    root_tuple = lambda rt, pE: (rt.T(), rt.X(), rt.Y(), rt.Z(), pE.E(), pE.Px(), pE.Py(), pE.Pz())
+    particle_tuple = lambda p: (p.t, p.rx, p.ry, p.rz, p.E, p.px, p.py, p.pz)
+
+    import copy
+    p2 = copy.copy(p)
+    assert_almost_equal(particle_tuple(p), particle_tuple(p2))
+    p2.boost(0.1)
+    p2.boost(-0.1)
+    assert_almost_equal(particle_tuple(p), particle_tuple(p2))
+    p2.boost(0.99)
+    p2.boost(-0.99)
+    p2.boost(0.99)
+    p2.boost(-0.99)
+    p2.boost(0.99)
+    p2.boost(-0.99)
+    p2.boost(0.99)
+    p2.boost(-0.99)
+    assert_almost_equal(particle_tuple(p), particle_tuple(p2))
+
+    import ROOT
+    rt = ROOT.TLorentzVector(p.rx, p.ry, p.rz, p.t)
+    pE = ROOT.TLorentzVector(p.px, p.py, p.pz, p.E)
+
+    assert_almost_equal(root_tuple(rt, pE), particle_tuple(p))
+
+    rt.Boost(0, 0, 0.9224028)
+    pE.Boost(0, 0, 0.9224028)
+    p.boost(0.9224028)
+
+    assert_almost_equal(root_tuple(rt, pE), particle_tuple(p))
+    print('test passed')
 
 if __name__ == "__main__":
     main()
