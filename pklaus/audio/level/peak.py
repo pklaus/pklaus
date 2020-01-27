@@ -13,12 +13,13 @@ import numpy as np
 def main():
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('--sample-rate', '-r', type=int, default=48000)
     parser.add_argument('--bars', '-b', type=int)
     args = parser.parse_args()
 
     maxValue = 2**16
     p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=2, rate=44100,
+    stream = p.open(format=pyaudio.paInt16, channels=2, rate=args.sample_rate,
                     input=True, frames_per_buffer=1024)
 
     try:
