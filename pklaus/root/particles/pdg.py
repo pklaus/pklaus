@@ -7,6 +7,9 @@ all_particles = list(db.ParticleList())
 data = {p.GetName(): p.PdgCode() for p in all_particles}
 ParticleID = enum.IntEnum('ParticleID', data)
 
-if __name__ == "__main__":
+def main():
     for pid in ParticleID:
         print(f"{pid.__class__.__name__}({pid.value}) == {pid.__class__.__name__}['{pid.name}']")
+
+if __name__ == "__main__":
+    main()
