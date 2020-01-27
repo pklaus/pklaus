@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 class TimelimitException(Exception):
     def __init__(self, sig):
         self.sig = sig
+    def __str__(self):
+        return f"TimeLimitException({self.sig.name})"
 
 class Timelimit():
 
