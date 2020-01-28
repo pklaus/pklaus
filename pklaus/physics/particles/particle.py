@@ -34,9 +34,8 @@ class ExtendedParticle(Particle):
 
     @property
     def m0(self):
-        #return float(self._properties[8]) # wrong?! column 8 is mass not invariant mass
         #return self.m / self.gamma
-        return math.sqrt(self.E**2 + math.sqrt(self.px**2 + self.py**2 + self.pz**2))
+        return math.sqrt(self.E**2 - (self.px**2 + self.py**2 + self.pz**2))
 
     @property
     def gamma(self):
@@ -44,7 +43,7 @@ class ExtendedParticle(Particle):
 
     @property
     def m(self):
-        return float(self._properties[8])
+        return self.gamma * self.m0
 
     @property
     def mT(self):
