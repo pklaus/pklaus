@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 def find_peak(data, fs=48000):
     data = data * np.hanning(len(data)) # smooth the FFT by windowing data
     fft = abs(np.fft.rfft(data))
-    fft = fft[:int(len(fft)/2)] # keep only first half
     freq = np.fft.rfftfreq(len(data), 1.0/fs)
-    freq = freq[:int(len(freq)/2)] # keep only first half
     return freq[np.where(fft==np.max(fft))[0][0]]+1
 
 def main():
