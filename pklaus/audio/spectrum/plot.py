@@ -13,14 +13,13 @@ from matplotlib.figure import Figure
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import Qt
 
-import pyaudio
+import soundcard as sc
 
 import threading
 import atexit
 import math
 
-sample_style = (pyaudio.paFloat32, np.float32, 1.0, -24, 24)
-#sample_style = (pyaudio.paInt16, np.int16, 32768, -24, 24)
+sample_style = (None, np.float32, 1.0, -24, 24)
 
 class DecibelSlider(QtWidgets.QSlider):
 
@@ -125,30 +124,31 @@ class DecibelSlider(QtWidgets.QSlider):
                         round(contents.y() + contents.height()))
 
 class MicrophoneRecorder(object):
-    # class taken from the SciPy 2015 Vispy talk opening example
-    # see https://github.com/vispy/vispy/pull/928
+    # @pklaus: use SoundCard instead of PyAudio
+    # class adapted from the SciPy 2015 Vispy talk opening example
+    # for original idea see https://github.com/vispy/vispy/pull/928
     def __init__(self, rate=4000, chunksize=1024):
         self.rate = rate
         self.chunksize = chunksize
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=sample_style[0],
-                                  channels=1,
-                                  rate=self.rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunksize,
-                                  stream_callback=self.new_frame)
+        self.mic = sc.default_microphone()
         self.lock = threading.Lock()
         self.stop = False
         self.frames = []
+        self.t = threading.Thread(target=self.capture_frames, daemon=True)
         atexit.register(self.close)
 
-    def new_frame(self, data, frame_count, time_info, status):
-        data = np.frombuffer(data, sample_style[1])
-        with self.lock:
-            self.frames.append(data)
-            if self.stop:
-                return None, pyaudio.paComplete
-        return None, pyaudio.paContinue
+    def capture_frames(self):
+        try:
+            with self.mic.recorder(self.rate, channels=1, blocksize=self.chunksize//16) as rec:
+                while True:
+                    data = rec.record(numframes=self.chunksize)
+                    data = data.reshape((len(data)))
+                    with self.lock:
+                        self.frames.append(data)
+                    if self.stop:
+                        break
+        except KeyboardInterrupt:
+            pass
 
     def get_frames(self):
         with self.lock:
@@ -157,13 +157,11 @@ class MicrophoneRecorder(object):
             return frames
 
     def start(self):
-        self.stream.start_stream()
+        self.t.start()
 
     def close(self):
-        with self.lock:
-            self.stop = True
-        self.stream.close()
-        self.p.terminate()
+        self.stop = True
+        self.t.join()
 
 class MplFigure(object):
     def __init__(self, parent):
