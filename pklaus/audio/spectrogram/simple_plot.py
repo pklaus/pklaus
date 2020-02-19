@@ -4,31 +4,62 @@ source: https://gist.github.com/boylea/1a0b5442171f9afbf372
 
 import numpy as np
 import pyqtgraph as pg
-import pyaudio
+import soundcard as sc
 from PyQt5 import QtCore, QtGui
+import threading
+import atexit
+import time
 
 FS = 48000 #Hz
 CHUNKSZ = 8192 #samples
 
 class MicrophoneRecorder():
-    def __init__(self, signal):
+    def __init__(self, signal, rate=48000, chunksize=2048):
         self.signal = signal
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                            channels=1,
-                            rate=FS,
-                            input=True,
-                            frames_per_buffer=CHUNKSZ)
+        self.rate = rate
+        self.chunksize = chunksize
+        self.mic = sc.default_microphone()
+        self.lock = threading.Lock()
+        self.stop = False
+        self.frames = []
+        self.t = threading.Thread(target=self.capture_frames, daemon=True)
+        atexit.register(self.close)
+        self.start()
+
+    def capture_frames(self):
+        try:
+            with self.mic.recorder(self.rate, channels=1, blocksize=self.chunksize//16) as rec:
+                while True:
+                    data = rec.record(numframes=self.chunksize)
+                    data = data.reshape((len(data)))
+                    with self.lock:
+                        self.frames.append(data)
+                    if self.stop:
+                        break
+        except KeyboardInterrupt:
+            pass
 
     def read(self):
-        data = self.stream.read(CHUNKSZ, exception_on_overflow=False)
-        y = np.fromstring(data, 'int16')
-        self.signal.emit(y)
+        while(len(self.frames) == 0):
+            time.sleep(0.01)
+        with self.lock:
+            data = self.frames[0]
+            del self.frames[0]
+            y = (np.rint(data*(2**15-1))).astype('int16')
+            self.signal.emit(y)
 
     def close(self):
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
+
+    def start(self):
+       self.t.start()
+
+    def close(self):
+       with self.lock:
+           self.stop = True
+       self.t.join()
 
 class SpectrogramWidget(pg.PlotWidget):
     read_collected = QtCore.pyqtSignal(np.ndarray)
@@ -80,7 +111,7 @@ def main():
     w = SpectrogramWidget()
     w.read_collected.connect(w.update)
 
-    mic = MicrophoneRecorder(w.read_collected)
+    mic = MicrophoneRecorder(w.read_collected, rate=FS, chunksize=CHUNKSZ)
 
     # time (seconds) between reads
     interval = FS/CHUNKSZ
