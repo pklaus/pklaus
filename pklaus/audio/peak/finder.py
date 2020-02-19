@@ -2,7 +2,7 @@
 source: https://www.swharden.com/wp/2016-07-19-realtime-audio-visualization-in-python/
 """
 
-import pyaudio
+import soundcard as sc
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,21 +15,17 @@ def find_peak(data, fs=48000):
 def main():
     CHUNK = 8192 # number of data points to read at a time
     RATE = 48000 # time resolution of the recording device (Hz)
-    p=pyaudio.PyAudio() # start the PyAudio class
-    stream=p.open(format=pyaudio.paInt16,channels=1,rate=RATE,input=True,
-                  frames_per_buffer=CHUNK) #uses default input device
+    default_mic = sc.default_microphone()
+
     try:
-        while True:
-            data = np.frombuffer(stream.read(CHUNK), dtype=np.int16)
-            peak_f = find_peak(data, fs=RATE)
-            print("peak frequency: %d Hz" % peak_f)
-    except:
+        with default_mic.recorder(RATE, channels=1, blocksize=CHUNK//16) as rec:
+            while True:
+                data = rec.record(numframes=CHUNK)
+                data = data.reshape((len(data)))
+                peak_f = find_peak(data, fs=RATE)
+                print("peak frequency: %d Hz" % peak_f)
+    except KeyboardInterrupt:
         print()
-    finally:
-        # close the stream gracefully
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
 
 if __name__ == "__main__":
     main()
